@@ -1,0 +1,94 @@
+import os
+import google.generativeai as genai
+from PIL import Image
+
+# Configuração da IA (Cole sua chave API aqui)
+API_KEY = "SUA_CHAVE_API_AQUI"
+genai.configure(api_key=API_KEY)
+
+# Dicionário mapeando os personagens aos seus arquivos de imagem
+PERSONAGENS = {
+    "1": {"nome": "Annabeth Chase", "arquivo": "annabeth.jpg"},
+    "2": {"nome": "Percy Jackson", "arquivo": "percy.jpg"},
+    "3": {"nome": "Leo Valdez", "arquivo": "leo.jpg"},
+    "4": {"nome": "Jason Grace", "arquivo": "jason.jpg"},
+    "5": {"nome": "Frank Zhang", "arquivo": "frank.jpg"},
+    "6": {"nome": "Rachel Dare", "arquivo": "rachel.jpg"}
+}
+
+def mostrar_imagem(nome_arquivo):
+    """Abre a imagem do personagem de forma assíncrona se o arquivo existir."""
+    if os.path.exists(nome_arquivo):
+        try:
+            img = Image.open(nome_arquivo)
+            img.show()
+        except Exception:
+            print(f"[Erro ao carregar a imagem: {nome_arquivo}]")
+    else:
+        print(f"[Aviso: Imagem '{nome_arquivo}' não encontrada na pasta]")
+
+def iniciar_chat(nome_personagem):
+    """Configura o comportamento da IA para agir como o personagem de Amor Doce."""
+    prompt_sistema = (
+        f"Você é o personagem {nome_personagem} do universo de Percy Jackson. "
+        "Você está em um jogo de romance estilo visual novel (Amor Doce). "
+        "Responda sempre em português, de forma imersiva, mantendo a personalidade "
+        "fiel ao livro e flertando sutilmente se o jogador demonstrar interesse. "
+        "Mantenha as respostas curtas, dinâmicas e termine com uma pergunta para continuar a conversa."
+    )
+    
+    model = genai.GenerativeModel(
+        model_name="gemini-1.5-flash",
+        system_instruction=prompt_sistema
+    )
+    return model.start_chat(history=[])
+
+def jogo():
+    print("✨ BEM-VINDO AO ACAMPAMENTO MEIO-SANGUE: AMOR DOCE EDITION ✨\n")
+    print("Escolha com quem você quer conversar e desenvolver seu *Love Comm*: ")
+    
+    for num, dados in PERSONAGENS.items():
+        print(f"[{num}] {dados['nome']}")
+        
+    escolha = input("\nDigite o número do personagem: ").strip()
+    
+    if escolha not in PERSONAGENS:
+        print("Opção inválida! Reinicie o jogo.")
+        return
+
+    personagem = PERSONAGENS[escolha]
+    nome = personagem["nome"]
+    imagem = personagem["arquivo"]
+    
+    print(f"\nIniciando rota com {nome}... Preparando o chalé!")
+    
+    # Inicia o chat infinito com a IA
+    chat = iniciar_chat(nome)
+    
+    # Primeira exibição da imagem do personagem
+    mostrar_imagem(imagem)
+    
+    # Mensagem inicial gerada pela IA
+    primeira_msg = chat.send_message("Apresente-se para o jogador que acabou de chegar no acampamento.")
+    print(f"\n💜 {nome}: {primeira_msg.text}\n")
+    
+    # Loop Infinito de conversa
+    while True:
+        seu_texto = input("Sua resposta (ou digite 'sair'): ").strip()
+        
+        if seu_texto.lower() == 'sair':
+            print(f"\nVocê se despediu de {nome}. Até a próxima aventura!")
+            break
+            
+        if not seu_texto:
+            continue
+            
+        # Reabre/atualiza a imagem para simular a presença visual novel
+        mostrar_imagem(imagem)
+        
+        # Envia a fala do jogador para a IA e recebe a resposta do personagem
+        resposta = chat.send_message(seu_texto)
+        print(f"\n💜 {nome}: {resposta.text}\n")
+
+if __name__ == "__main__":
+    jogo()
